@@ -17,7 +17,7 @@ public class SortProcessor
         var sourcePath = Path.Combine(sourceDirectory, sourceFileName);
 
         var chunksDirectoryPath = CreateChunkDirectory(sourceDirectory);
-        var chunkPaths = CreatedSortedChunks(sourceDirectory, sourceFileName, chunksDirectoryPath);
+        var chunkPaths = CreatedSortedChunks(sourceDirectory, sourceFileName, chunksDirectoryPath, stopwatch);
 
         var resultFilePath = Path.Combine(sourceDirectory, resultFileName);
 
@@ -35,7 +35,7 @@ public class SortProcessor
     }
 
     private IEnumerable<string> CreatedSortedChunks(string sourceDirectory, string sourceFileName,
-        string chunksDirectoryPath)
+        string chunksDirectoryPath, Stopwatch stopwatch)
     {
         var chunkCounter = 0;
 
@@ -44,13 +44,18 @@ public class SortProcessor
             .Chunk(ChunkSize)
             .AsParallel()
             .AsUnordered()
+            .Select(x =>
+            {
+                Console.WriteLine(stopwatch.Elapsed);
+                return x;
+            })
             .Select(chunk =>
             {
                 chunk.AsSpan().Sort();
                 var chunkNumber = Interlocked.Increment(ref chunkCounter);
                 var chunkFilePath = Path.Combine(chunksDirectoryPath, $"chunk_{chunkNumber}.txt");
                 File.WriteAllLines(chunkFilePath, chunk.Select(x => x.Source));
-                Console.WriteLine($"{DateTime.Now:hh:mm:ss fff}:_{chunkFilePath}");
+                Console.WriteLine($"{stopwatch.Elapsed}:_{chunkFilePath}");
                 return chunkFilePath;
             }).ToArray();
     }
