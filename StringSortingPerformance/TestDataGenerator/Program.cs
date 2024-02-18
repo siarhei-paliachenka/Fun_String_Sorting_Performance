@@ -1,7 +1,7 @@
 ﻿using TestDataGenerator;
 
 var generator = new Generator();
-await generator.GenerateTestFile(@"D:\TestData",
+await generator.GenerateTestFile(@"C:\TestData",
     "original_text.txt",
     "test_data",
     1,

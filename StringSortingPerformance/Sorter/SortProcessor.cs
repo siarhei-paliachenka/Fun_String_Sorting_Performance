@@ -16,23 +16,25 @@ public class SortProcessor
 
         var sourcePath = Path.Combine(sourceDirectory, sourceFileName);
 
-        CreateChunkDirectory(sourceDirectory);
-        var chunkPaths = CreatedSortedChunks(sourceDirectory, sourceFileName);
+        var chunksDirectoryPath = CreateChunkDirectory(sourceDirectory);
+        var chunkPaths = CreatedSortedChunks(sourceDirectory, sourceFileName, chunksDirectoryPath);
 
         var resultFilePath = Path.Combine(sourceDirectory, resultFileName);
 
         stopwatch.Stop();
 
-        Console.WriteLine($"File {resultFilePath} is created in {stopwatch.Elapsed.Seconds} s");
+        Console.WriteLine($"File {resultFilePath} is created in {stopwatch.Elapsed} s");
     }
 
-    private void CreateChunkDirectory(string sourceDirectory)
+    private string CreateChunkDirectory(string sourceDirectory)
     {
-        var directoryPath = Path.Combine(sourceDirectory, ChunksDirectoryName);
+        var directoryPath = Path.Combine(sourceDirectory, 
+            $"{ChunksDirectoryName}_{DateTime.Now:yyyy'_'MM'_'dd'_'HH'_'mm'_'ss}");
         Directory.CreateDirectory(directoryPath);
+        return directoryPath;
     }
 
-    private IEnumerable<string> CreatedSortedChunks(string sourceDirectory, string sourceFileName)
+    private IEnumerable<string> CreatedSortedChunks(string sourceDirectory, string sourceFileName, string chunksDirectoryPath)
     {
         var chunkCounter = 0;
 
@@ -45,9 +47,9 @@ public class SortProcessor
             {
                 chunk.AsSpan().Sort();
                 var chunkNumber = Interlocked.Increment(ref chunkCounter);
-                var chunkFilePath = Path.Combine(sourceDirectory, ChunksDirectoryName, $"chunk_{chunkNumber}.txt");
+                var chunkFilePath = Path.Combine(chunksDirectoryPath, $"chunk_{chunkNumber}.txt");
                 File.WriteAllLines(chunkFilePath, chunk.Select(x => x.Source));
-                Console.WriteLine($"{DateTime.Now}:_{chunkFilePath}");
+                Console.WriteLine($"{DateTime.Now:hh:mm:ss fff}:_{chunkFilePath}");
                 return chunkFilePath;
             }).AsUnordered().ToArray();
     }

@@ -2,7 +2,7 @@
 
 var sortProcessor = new SortProcessor();
 sortProcessor.Sort(
-    @"D:\TestData",
+    @"C:\TestData",
     "test_data_1Gb.txt",
     "result",
     new CancellationTokenSource().Token
