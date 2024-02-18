@@ -5,7 +5,7 @@ namespace Sorter;
 public class SortProcessor
 {
     const string ChunksDirectoryName = "chunks";
-    
+
     public void Sort(string sourceDirectory,
         string sourceFileName,
         string resultFileName,
@@ -13,14 +13,14 @@ public class SortProcessor
     {
         var stopwatch = new Stopwatch();
         stopwatch.Start();
-        
+
         var sourcePath = Path.Combine(sourceDirectory, sourceFileName);
 
         CreateChunkDirectory(sourceDirectory);
-        var chunkPaths = CreatedSortedChunks(sourceDirectory, sourceFileName).ToArray();
-        
+        var chunkPaths = CreatedSortedChunks(sourceDirectory, sourceFileName);
+
         var resultFilePath = Path.Combine(sourceDirectory, resultFileName);
-        
+
         stopwatch.Stop();
 
         Console.WriteLine($"File {resultFilePath} is created in {stopwatch.Elapsed.Seconds} s");
@@ -28,7 +28,6 @@ public class SortProcessor
 
     private void CreateChunkDirectory(string sourceDirectory)
     {
-
         var directoryPath = Path.Combine(sourceDirectory, ChunksDirectoryName);
         Directory.CreateDirectory(directoryPath);
     }
@@ -37,19 +36,21 @@ public class SortProcessor
     {
         var chunkCounter = 0;
 
-        return File.ReadLines(Path.Combine(sourceDirectory,sourceFileName))
+        return File.ReadLines(Path.Combine(sourceDirectory, sourceFileName))
+            .AsParallel()
             .Select(x => new Item(x))
             .Chunk(ChunkSize)
+            .AsParallel()
             .Select(chunk =>
             {
-                Array.Sort(chunk);
-                var chunkFilePath = Path.Combine(sourceDirectory, ChunksDirectoryName, $"chunk_{chunkCounter++}.txt");
+                chunk.AsSpan().Sort();
+                var chunkNumber = Interlocked.Increment(ref chunkCounter);
+                var chunkFilePath = Path.Combine(sourceDirectory, ChunksDirectoryName, $"chunk_{chunkNumber}.txt");
                 File.WriteAllLines(chunkFilePath, chunk.Select(x => x.Source));
-                Console.WriteLine(chunkFilePath);
+                Console.WriteLine($"{DateTime.Now}:_{chunkFilePath}");
                 return chunkFilePath;
-            });
+            }).AsUnordered().ToArray();
     }
 
     private int ChunkSize => 1_000_000;
-
 }
