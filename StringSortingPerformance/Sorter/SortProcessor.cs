@@ -28,21 +28,22 @@ public class SortProcessor
 
     private string CreateChunkDirectory(string sourceDirectory)
     {
-        var directoryPath = Path.Combine(sourceDirectory, 
+        var directoryPath = Path.Combine(sourceDirectory,
             $"{ChunksDirectoryName}_{DateTime.Now:yyyy'_'MM'_'dd'_'HH'_'mm'_'ss}");
         Directory.CreateDirectory(directoryPath);
         return directoryPath;
     }
 
-    private IEnumerable<string> CreatedSortedChunks(string sourceDirectory, string sourceFileName, string chunksDirectoryPath)
+    private IEnumerable<string> CreatedSortedChunks(string sourceDirectory, string sourceFileName,
+        string chunksDirectoryPath)
     {
         var chunkCounter = 0;
 
         return File.ReadLines(Path.Combine(sourceDirectory, sourceFileName))
-            .AsParallel()
             .Select(x => new Item(x))
             .Chunk(ChunkSize)
             .AsParallel()
+            .AsUnordered()
             .Select(chunk =>
             {
                 chunk.AsSpan().Sort();
@@ -51,7 +52,7 @@ public class SortProcessor
                 File.WriteAllLines(chunkFilePath, chunk.Select(x => x.Source));
                 Console.WriteLine($"{DateTime.Now:hh:mm:ss fff}:_{chunkFilePath}");
                 return chunkFilePath;
-            }).AsUnordered().ToArray();
+            }).ToArray();
     }
 
     private int ChunkSize => 1_000_000;
